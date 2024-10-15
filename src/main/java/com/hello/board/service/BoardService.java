@@ -57,4 +57,8 @@ public class BoardService {
 
         return findById(boardDTO.getId());
     }
+
+    public void delete(Long id) {
+        boardRepository.deleteById(id);
+    }
 }

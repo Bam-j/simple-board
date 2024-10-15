@@ -72,4 +72,11 @@ public class BoardController {
         return "detail";
         //return "redirect:/board" + boardDTO.getId();  <- 상세 조회시 조회수가 올라가므로 수정에 조회수가 영향이 간다.
     }
+
+    @GetMapping("/delete/{id}")
+    public String delete(@PathVariable Long id) {
+        boardService.delete(id);
+
+        return "redirect:/board/";
+    }
 }
