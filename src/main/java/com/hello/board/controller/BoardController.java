@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequiredArgsConstructor
 @RequestMapping("/board")   //각 매핑 주소의 앞에 /board를 붙여줌.
 public class BoardController {
+
     private final BoardService boardService;
 
     @GetMapping("/save")
@@ -37,5 +39,18 @@ public class BoardController {
         model.addAttribute("boardList", boardDTOList);
 
         return "list";
+    }
+
+    @GetMapping("/{id}")    //경로상의 값을 가져올 땐 @PathVariable 사용
+    public String findById(@PathVariable Long id, Model model) {
+        //1. 해당 게시글의 조회수를 하나 올리기
+        boardService.updateHits(id);
+
+        //2. 게시글 데이터를 가져와서 detail.html에 출력
+        BoardDTO boardDTO = boardService.findById(id);
+
+        model.addAttribute("board", boardDTO);
+
+        return "detail";
     }
 }
