@@ -8,6 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -60,5 +65,38 @@ public class BoardService {
 
     public void delete(Long id) {
         boardRepository.deleteById(id);
+    }
+
+    public Page<BoardDTO> paging(Pageable pageable) {
+        int page = pageable.getPageNumber() - 1;
+        int pageLimit = 3;  //한 페이지에 보여줄 글의 수
+
+        //한 페이지 당 글을 3개씩 보여주고, 정렬 기준은 id 기준으로 내림차순 정렬
+        //page의 값은 0부터 시작. 실제로 사용자가 보는 페이지는 1페이지부터
+        Page<BoardEntity> boardEntities = boardRepository.findAll(
+            PageRequest.of(page, pageLimit,
+                Sort.by(Direction.DESC, "id")));    //properties: Entity 기준 컬럼네임
+
+        System.out.println(
+            "boardEntities.getContent() = " + boardEntities.getContent()); // 요청 페이지에 해당하는 글
+        System.out.println(
+            "boardEntities.getTotalElements() = " + boardEntities.getTotalElements()); // 전체 글갯수
+        System.out.println(
+            "boardEntities.getNumber() = " + boardEntities.getNumber()); // DB로 요청한 페이지 번호
+        System.out.println(
+            "boardEntities.getTotalPages() = " + boardEntities.getTotalPages()); // 전체 페이지 갯수
+        System.out.println(
+            "boardEntities.getSize() = " + boardEntities.getSize()); // 한 페이지에 보여지는 글 갯수
+        System.out.println(
+            "boardEntities.hasPrevious() = " + boardEntities.hasPrevious()); // 이전 페이지 존재 여부
+        System.out.println("boardEntities.isFirst() = " + boardEntities.isFirst()); // 첫 페이지 여부
+        System.out.println("boardEntities.isLast() = " + boardEntities.isLast()); // 마지막 페이지 여부
+
+        //목록: id, writer, title, hits, createdTime
+        Page<BoardDTO> boardDTOS = boardEntities.map(boardEntity -> new BoardDTO(
+            boardEntity.getId(), boardEntity.getBoardWriter(), boardEntity.getBoardTitle(),
+            boardEntity.getBoardHits(), boardEntity.getCreatedTime()));
+
+        return boardDTOS;
     }
 }
