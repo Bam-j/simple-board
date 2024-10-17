@@ -45,7 +45,8 @@ public class BoardController {
     }
 
     @GetMapping("/{id}")    //경로상의 값을 가져올 땐 @PathVariable 사용
-    public String findById(@PathVariable Long id, Model model) {
+    public String findById(@PathVariable Long id, Model model,
+        @PageableDefault(page = 1) Pageable pageable) {
         //1. 해당 게시글의 조회수를 하나 올리기
         boardService.updateHits(id);
 
@@ -53,6 +54,8 @@ public class BoardController {
         BoardDTO boardDTO = boardService.findById(id);
 
         model.addAttribute("board", boardDTO);
+
+        model.addAttribute("page", pageable.getPageNumber());
 
         return "detail";
     }
@@ -90,7 +93,8 @@ public class BoardController {
 
         int blockLimit = 3; //보여줄 페이지 블록 수
         int startPage =
-            (((int) (Math.ceil((double) pageable.getPageNumber() / blockLimit))) - 1) * blockLimit + 1; // 1 4 7 10 ~~
+            (((int) (Math.ceil((double) pageable.getPageNumber() / blockLimit))) - 1) * blockLimit
+                + 1; // 1 4 7 10 ~~
         int endPage =
             ((startPage + blockLimit - 1) < boardList.getTotalPages()) ?
                 startPage + blockLimit - 1 : boardList.getTotalPages();
