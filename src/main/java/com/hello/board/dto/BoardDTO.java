@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @Setter
@@ -23,6 +24,12 @@ public class BoardDTO {
     private int boardHits;  //조회수
     private LocalDateTime boardCreatedTime;
     private LocalDateTime boardUpdatedTime;
+
+    //파일 관련 필드
+    private MultipartFile boardFile; //html에서 controller로 넘어올 때 파일을 담음
+    private String originalFileName;    //원본 파일 이름
+    private String storedFileName;  //서버 저장용 파일 이름
+    private int fileAttached;   //파일 첨부 여부(1: 첨부, 0: 미첨부)
 
     public BoardDTO(Long id, String boardWriter, String boardTitle,
         int boardHits, LocalDateTime boardCreatedTime) {
@@ -44,6 +51,17 @@ public class BoardDTO {
         boardDTO.setBoardHits(boardEntity.getBoardHits());
         boardDTO.setBoardCreatedTime(boardEntity.getCreatedTime());
         boardDTO.setBoardUpdatedTime(boardEntity.getUpdatedTime());
+
+        if (boardEntity.getFileAttached() == 0) {
+            boardDTO.setFileAttached(boardEntity.getFileAttached());
+        } else {
+            boardDTO.setFileAttached(boardEntity.getFileAttached());
+
+            //파일 이름을 가져간다
+            //SELECT * FROM board_table b, board_file_table bf WHERE b.id=bf.board_id AND WHERE b.i=?
+            boardDTO.setOriginalFileName(boardEntity.getBoardFileEntityList().get(0).getOriginalFileName());
+            boardDTO.setStoredFileName(boardEntity.getBoardFileEntityList().get(0).getStoredFileName());
+        }
 
         return boardDTO;
     }

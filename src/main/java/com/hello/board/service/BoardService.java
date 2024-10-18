@@ -2,8 +2,12 @@ package com.hello.board.service;
 
 import com.hello.board.dto.BoardDTO;
 import com.hello.board.entity.BoardEntity;
+import com.hello.board.entity.BoardFileEntity;
+import com.hello.board.repository.BoardFileRepository;
 import com.hello.board.repository.BoardRepository;
 import jakarta.transaction.Transactional;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -14,18 +18,50 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
 public class BoardService {
 
     private final BoardRepository boardRepository;
+    private final BoardFileRepository boardFileRepository;
 
-    public void save(BoardDTO boardDTO) {
-        BoardEntity boardEntity = BoardEntity.toSaveEntity(boardDTO);
-        boardRepository.save(boardEntity);
+    public void save(BoardDTO boardDTO) throws IOException {
+        if (boardDTO.getBoardFile().isEmpty()) {
+            //파일이 첨부되지 않은 경우
+            BoardEntity boardEntity = BoardEntity.toSaveEntity(boardDTO);
+            boardRepository.save(boardEntity);
+        } else {
+            //파일이 첨부된 경우 (1 ~ 5: 파일 저장)
+            //1. DTO에 담긴 파일을 꺼낸다.
+            MultipartFile boardFile = boardDTO.getBoardFile();
+
+            //2. 파일의 이름을 가져온다.
+            String originalFilename = boardFile.getOriginalFilename();
+
+            //3. 서버 저장용 이름으로 수정한다. (난수_파일명.확장자)
+            String storedFileName = System.currentTimeMillis() + "_" + originalFilename;
+
+            //4. 저장 경로 설정
+            String savePath = "C:/springboot_img/" + storedFileName;
+
+            //5. 해당 경로에 파일 저장
+            boardFile.transferTo(new File(savePath));
+
+            //6. board_table에 해당 데이터 save 처리
+            BoardEntity boardEntity = BoardEntity.toSaveFileEntity(boardDTO);
+            Long savedId = boardRepository.save(boardEntity).getId();
+
+            //7. board_file_table에 해당 데이터 save 처리
+            BoardEntity board = boardRepository.findById(savedId).get();
+            BoardFileEntity boardFileEntity = BoardFileEntity.toBoardFileEntity(board,
+                originalFilename, storedFileName);
+            boardFileRepository.save(boardFileEntity);
+        }
     }
 
+    @Transactional
     public List<BoardDTO> findAll() {
         List<BoardEntity> boardEntityList = boardRepository.findAll();
         List<BoardDTO> boardDTOList = new ArrayList<>();
@@ -42,6 +78,7 @@ public class BoardService {
         boardRepository.updateHits(id);
     }
 
+    @Transactional  //부모 엔티티(BoardEntity)에서 자식 엔티티(BoardFileEntity)에 접근할 때 @Transactional을 붙인다.
     public BoardDTO findById(Long id) {
         Optional<BoardEntity> optionalBoardEntity = boardRepository.findById(id);
 
