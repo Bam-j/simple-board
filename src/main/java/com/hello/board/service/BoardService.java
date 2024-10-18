@@ -33,6 +33,8 @@ public class BoardService {
             BoardEntity boardEntity = BoardEntity.toSaveEntity(boardDTO);
             boardRepository.save(boardEntity);
         } else {
+            /*
+            *   단일 파일 첨부시 코드
             //파일이 첨부된 경우 (1 ~ 5: 파일 저장)
             //1. DTO에 담긴 파일을 꺼낸다.
             MultipartFile boardFile = boardDTO.getBoardFile();
@@ -58,6 +60,22 @@ public class BoardService {
             BoardFileEntity boardFileEntity = BoardFileEntity.toBoardFileEntity(board,
                 originalFilename, storedFileName);
             boardFileRepository.save(boardFileEntity);
+             */
+
+            BoardEntity boardEntity = BoardEntity.toSaveFileEntity(boardDTO);
+            Long savedId = boardRepository.save(boardEntity).getId();
+            BoardEntity board = boardRepository.findById(savedId).get();
+
+            for (MultipartFile boardFile : boardDTO.getBoardFile()) {
+                String originalFilename = boardFile.getOriginalFilename();
+                String storedFileName = System.currentTimeMillis() + "_" + originalFilename;
+                String savePath = "C:/springboot_img/" + storedFileName;
+                boardFile.transferTo(new File(savePath));
+
+                BoardFileEntity boardFileEntity = BoardFileEntity.toBoardFileEntity(board,
+                    originalFilename, storedFileName);
+                boardFileRepository.save(boardFileEntity);
+            }
         }
     }
 
