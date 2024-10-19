@@ -1,7 +1,9 @@
 package com.hello.board.controller;
 
 import com.hello.board.dto.BoardDTO;
+import com.hello.board.dto.CommentDTO;
 import com.hello.board.service.BoardService;
+import com.hello.board.service.CommentService;
 import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class BoardController {
 
     private final BoardService boardService;
+    private final CommentService commentService;
 
     @GetMapping("/save")
     public String saveForm() {
@@ -53,6 +56,10 @@ public class BoardController {
 
         //2. 게시글 데이터를 가져와서 detail.html에 출력
         BoardDTO boardDTO = boardService.findById(id);
+
+        //댓글목록 가져오기
+        List<CommentDTO> commentDTOList = commentService.findAll(id);
+        model.addAttribute("commentList", commentDTOList);
 
         model.addAttribute("board", boardDTO);
 
